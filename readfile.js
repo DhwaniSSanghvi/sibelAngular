@@ -485,7 +485,7 @@ async function connectSerial() {
   // });
 
 
-    const serialPort = fetch('https://9a9b-2402-8100-27c2-7ca8-22fa-ae-2b16-d6d8.ngrok-free.app/serialports')
+    const serialPort = fetch('https://sibelangular.onrender.com/serialports')
     .then(response => {
       if (!response.ok) {
         throw new Error('Failed to fetch serial ports');
