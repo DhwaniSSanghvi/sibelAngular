@@ -60,17 +60,7 @@ const port = 5000;
 const app = express();
 app.use(cors());
 
-app.get('/serialports', (req, res) => {
-  let portsarray =[];
-  SerialPort.SerialPort.list().then((ports) => {
-            ports.forEach(element => {
-                portsarray.push(element.path.split("/dev/").pop())
-              });
-              res.json(portsarray);
-        }).catch((err) => {
-          res.status(500).send('Error fetching serial ports: ' + err.message);
-        });
-});
+
 
 
 // Serve static files (HTML, CSS, JavaScript, etc.)
@@ -79,6 +69,21 @@ app.use(express.static(path.join(__dirname, '/')));
 // Define a route for the root URL
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.get('/serialports', (req, res) => {
+  console.log('Entering in app.get serialports');
+  let portsarray =[];
+  SerialPort.SerialPort.list().then((ports) => {
+    console.log('ports',ports);
+            ports.forEach(element => {
+                portsarray.push(element.path.split("/dev/").pop())
+              });
+              console.log('Final Array::::', portsarray);
+              res.json(portsarray);
+        }).catch((err) => {
+          res.status(500).send('Error fetching serial ports: ' + err.message);
+        });
 });
 
 // // Start the server
