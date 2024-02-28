@@ -1,0 +1,239 @@
+.row.col-md-6 {
+  box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+}
+
+
+.classone {
+  margin-left: -50px !important;
+}
+
+.classtwo {
+  margin-left: 180px !important;
+  margin-top: 10%;
+}
+
+.row {
+  display: flex !important;
+}
+
+.dataPoint {
+  padding: 10px;
+  font-family: sans-serif;
+  font-size: 18px;
+  color: #34b2ea;
+  position: absolute;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  margin: 11;
+  /*  overflow: hidden; */
+}
+
+button.btn {
+  background-color: #34b2ea;
+  color: #fff;
+}
+/*  
+#chestButton
+{
+  top: -60px;
+  left: 10px;
+  margin-left: -240px;
+}
+#limbButton
+{
+  top: -60px;
+  left: 70px;
+  margin-left: -120px;
+}
+#tempButton
+{
+  font-size: 12px;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 100px;
+  cursor: pointer;  
+  position: absolute;
+  top: 510px;
+  left: 1150px;
+}*/
+#version{
+  color: white;
+} 
+
+.infodata{
+  /* background-color: rgb(219, 219, 219) !important; */
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+button:hover {
+  background-color: #1a5f89;
+}
+/* Add a new style for the connected state */
+button:disabled {
+  /* background-color: #548391; */
+  background-color: #ccc !important; /* Light gray background for disabled state */
+  color: #666;
+}
+
+button.start {
+  color: white;
+  background-color: #22bb22; /* Change the color to green or your desired color */
+}
+
+button.stop {
+  color: white;
+  background-color: #de4038;
+}
+img {
+  height: auto;
+  display: block;
+}
+
+.temperature{
+  opacity: 0;
+}
+
+
+/* Positioning based on alt attribute */
+/* .image1 {
+  max-width:8%;
+  position:absolute;
+  left: 45px;
+  top: 35px;
+  border : '2px solid green';
+} */
+
+#limbButton{
+  margin-left:38%;
+  margin-top: -50%
+}
+
+#chestButton{
+  margin-left: 16%;
+  margin-top: -50%;
+}
+.col-sm-7{
+  margin-left: 350px !important;
+}
+
+.image2 {
+  max-width: 5.5%;
+  transform-origin: top left;
+  transform: rotate(-90deg);
+  margin-top: 50px;
+  margin-left: 20px;
+  /* position:absolute;
+  left: 50px; 
+  top: 530px; */
+}
+.image3 {
+  max-width: 7%;
+  transform-origin: top left;
+  transform: rotate(-90deg);
+  margin-left: 50%;
+  margin-top: -65px;
+  /* position:absolute;
+  left: 350px;
+  top: 530px; */
+}
+
+h2 {
+  font-family: "Franklin Gothic Medium", "Arial Narrow", Arial, sans-serif; /* Fallback to sans-serif if Helvetica is not available */
+  font-size: 27px;
+  color: white;
+  position: absolute;
+  top: 10px;
+  left: 498px;
+}
+
+/* .card-body{
+  background-image: linear-gradient(#205972, #34b2ea);
+} */
+
+
+table {
+  border-collapse: collapse;
+  width: 150%;
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
+}
+
+th, td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+th.key {
+  color: #34b2ea;
+}
+
+td.value {
+  color: #de4038;
+} 
+
+#chestkeys{
+
+}
+
+/* body{
+  background-color: rgba(0, 0, 0, 0.8) !important;
+} */
+
+.card {
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+  /* position: relative !;
+  width: 592px !important;
+  height: 450px !important; */
+}
+
+.navbar {
+  background-color: #000000d4 !important;
+}
+
+/* .col-sm-6{
+  opacity: 0;
+} */
+
+.btn:hover,
+.btn:focus,
+.btn:active {
+  color: #fff !important;
+  border: none;
+  /* background-color: #34b2ea; */
+}
+
+/* .btn[disabled]:hover,
+.btn[disabled]:active:focus,
+.btn[disabled]:focus {
+  background:none ;
+} */
+ 
+
+/* .dataPoint:nth-child(1) {
+  left: auto !important;
+  top: auto !important;
+}
+
+.dataPoint:nth-child(2) {
+  left: 10px !important;
+  top: 210px !important;
+} */
+
+/* .dataPoint:nth-child(3) {
+  left: 30px !important;
+  top: 250px !important;
+}
+
+.dataPoint:nth-child(4) {
+  left: 20px !important;
+  top: 230px !important;
+} */
+
+@media (min-width: 1200px) {
+  .container {
+    max-width: 1300px !important;
+  }
+}

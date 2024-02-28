@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>ANNENET Stream</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="styles.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+</head>
+
+<body>
+  <nav class="navbar sticky-top">
+    <a class="navbar-brand" href="">
+      <img id="logo" src="images/sibel_logo.png" alt="Sibel" width="100" height="50" style="margin-left: 20px;">
+    </a>
+    <h2>ANNENET STREAMING PLATFORM</h2>
+  </nav>
+  <div class="container-fluid">
+
+    <div class="row m-3">
+      <div class="col-sm-12 col text-center">
+        <button type="button" class="btn" id="connectButton">Connect</button>
+        <button type="button" class="btn" id="logging">Start logging</button>
+        <button type="button" class="btn" id="Stream">Start Stream</button>
+        <button type="button" class="btn" id="infoButton">Device Information</button>
+      </div>
+    </div>
+
+    <div class="infodata col-sm-7 mt-4  p-2">
+      <div class="">
+        <div class="" style="height: 300px;">
+          <img id="" src="images/ANNEChest.png" alt="ANNE Chest" class="image2 ">
+          <img id="" src="images/ANNELimb.png" alt="ANNE Limb" class="image3 ">
+          <button id="chestButton"  class="btn">Sensor Status</button>
+          <button id="limbButton" class="btn" >Sensor Status</button>
+          <button class="temperature" id="tempButton">Switch to °F</button>
+          <div id="version"></div>
+          <div id="info-container"></div>
+          <div id="chestkeys"></div>
+          <div id="limbkeys"></div>
+          <div id="chestdat"></div>
+          <div id="limbdat"></div>
+          <div id="informationKeys"></div>
+          <div id="information"></div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="row">
+      <div class="col-sm-6 mt-4 p-2">
+        <div class="card">
+          <div class="card-body">
+            <div class="temp" id="Temperature"></div>
+            
+          </div>
+        </div>
+      </div>
+      <!-- <div class="col-sm-6  p-2">
+        <div class="card">
+          <div class="card-body" style="height: 490px;">
+            
+            <img id="chestimg" src="images/ANNEChest.png" alt="ANNE Chest" class="image2 glow-image">
+            <img id="limbimg" src="images/ANNELimb.png" alt="ANNE Limb" class="image3 glow-image">
+            <button  id="chestButton">Sensor Status</button>
+            <button  id="limbButton">Sensor Status</button>
+            <button id="tempButton">Switch to °F</button>
+            <div id="version"></div>
+            <div id="info-container"></div>
+            
+            <div id="chestkeys"></div>
+            <div id="limbkeys"></div>
+            <div id="chestdat"></div>
+            <div id="limbdat"></div>
+            <div id="informationKeys"></div>
+            <div id="information"></div>
+          </div>
+        </div>
+      </div> -->
+
+    
+
+      <div class="col-sm-6 mt-4 p-2">
+        <div class="card">
+          <div class="card-body">
+            <div id="ECG"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- <div class="col-sm-6  p-2">
+        <div class="card">
+          <div class="card-body" style="height: 490px;">
+            <img id="chestimg" src="images/ANNEChest.png" alt="ANNE Chest" class="image2 glow-image">
+            <img id="limbimg" src="images/ANNELimb.png" alt="ANNE Limb" class="image3 glow-image">
+            <button class="btn-md" id="chestButton">Sensor Status</button>
+            <button class="btn-md" id="limbButton">Sensor Status</button>
+            <button id="tempButton">Switch to °F</button>
+            <div id="version"></div>
+            <div id="info-container"></div>
+            <div id="chestkeys"></div>
+            <div id="limbkeys"></div>
+            <div id="chestdat"></div>
+            <div id="limbdat"></div>
+            <div id="informationKeys"></div>
+            <div id="information"></div>
+          </div>
+        </div>
+      </div> -->
+      
+      <div class="col-sm-6 mt-4 p-2">
+        <div class="card">
+          <div class="card-body">
+            <div id="PPGRED"></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-6 mt-4 p-2">
+        <div class="card">
+          <div class="card-body">
+            <div id="HR"></div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-sm-6 mt-4 p-2">
+        <div class="card">
+          <div class="card-body">
+            <div id="SP2"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-sm-6 mt-4 p-2">
+        <div class="card">
+          <div class="card-body">
+            <div id="PR"></div>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+
+  </div>
+
+
+  <!-- <div class="container">
+    <div class="row classone">
+      <div class="col-md-6 classone">
+        <div class="col">
+          <div id="Temperature"></div>
+        </div>
+        <div class="col">
+          <div id="ECG"></div>
+        </div>
+        <div class="w-50"></div>
+        <div class="col">
+          <div id="PPGRED"></div>
+        </div>
+        <div class="col">
+          <div id="HR"></div>
+        </div>
+        <div class="w-50"></div>
+        <div class="col">
+          <div id="SP2"></div>
+        </div>
+        <div class="col">
+          <div id="PR"></div>
+        </div>
+      </div>
+      <div class="row classtwo">
+        <div class="col-md-6 classtwo">
+
+          <button class="btn-md" id="chestButton">Sensor Status</button>
+          <button class="btn-md" id="limbButton">Sensor Status</button>
+          <div id="info-container"></div>
+          <div id="chestkeys"></div>
+          <div id="limbkeys"></div>
+          <div id="chestdat"></div>
+          <div id="limbdat"></div>
+          <div id="informationKeys"></div>
+          <div id="information"></div> -->
+  <!-- <div id="informationKeys"></div>
+          <div id="information"></div> -->
+  <!-- </div> -->
+  <!-- </div> -->
+
+  <!-- </div> -->
+  <!-- </div> -->
+
+
+
+
+
+  <!-- <div id="Temperature"></div> -->
+  <!-- <button id="tempButton">Switch to °F</button> -->
+  <!-- <div id="ECG"></div> -->
+  <!-- <div id="PPGIR"></div> -->
+  <!-- <div id="PPGRED"></div> -->
+  <!-- <div id="version"></div> -->
+  <!-- <div id="HR"></div> -->
+  <!-- <div id="SP2"></div> -->
+  <!-- <div id="PR"></div> -->
+
+  <!--     
+    <img id="logo" src="images/sibel_logo.png" alt="Sibel" class="image1">
+    <img id="chestimg" src="images/ANNEChest.png" alt="ANNE Chest" class="image2 glow-image">    
+    <img id="limbimg" src="images/ANNELimb.png" alt="ANNE Limb" class="image3 glow-image">
+    <h2>ANNENET'S STREAMING PLATFORM</h2>
+    <button id="connectButton">Connect to Serial Port</button>
+    <button id="logging">Start logging</button>
+    <button id="Stream">Start Stream</button>
+    <button id="infoButton">Device Information</button>
+    <button id="chestButton">Sensor Status</button>
+    <button id="limbButton">Sensor Status</button> 
+    <div id="Temperature"></div>
+    <button id="tempButton">Switch to °F</button>
+    <div id="ECG"></div>
+    <div id="PPGIR"></div>
+    <div id="PPGRED"></div>
+    <div id="version"></div>
+    <div id="HR"></div>
+    <div id="SP2"></div>
+    <div id="PR"></div>
+    <div id="info-container"></div>
+    <div id="chestkeys"></div>
+    <div id="limbkeys"></div>
+    <div id="chestdat"></div>
+    <div id="limbdat"></div>
+    <div id="informationKeys"></div>
+    <div id="information"></div> -->
+  <script src="readfile.js"></script>
+</body>
+
+</html>

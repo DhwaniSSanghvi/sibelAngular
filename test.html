@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ANNINET Stream</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+      #ECG {
+  width: 600px;
+  height: 400px;
+}
+
+#Temperature {
+  width: 600px;
+  height: 400px;
+}
+#HeartRate {
+    width: 600px;
+    height: 400px;
+  }
+body {
+  font-family: Arial, sans-serif;
+  margin: 11;
+}
+
+button {
+  font-size: 16px;
+  padding: 10px 20px;
+  background-color: #00b3e7;
+  color: white;
+  border: none;
+  border-radius: 100px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #279cb9;
+}
+/* Add a new style for the connected state */
+
+button.connected {
+  background-color: #22bb22; /* Change the color to green or your desired color */
+}
+
+    </style>
+  </head>
+<body>
+    <button id="connectButton">Connect to Serial Port</button>
+    <button id="StopFile">Stop File</button>
+    <!-- <button id="toggleButton">Start</button> -->
+    <div id="Temperature"></div>
+    <div id="ECG"></div>
+    <div id="HeartRate"></div>
+    <script>
+      //Global data
+const GraphResolveTime = 5;
+const DataResolveTime = 10;
+const timeDiff = 16; //    4096/256
+let wflag = 0;
+let writable;
+const ECG_V_REF_MILLIVOLTS = 1000.0;
+const ECG_GAIN_V_V = 160.0;
+const ECG_12_BITS_TO_18_BITS = 1 << 6;
+
+class DataQueue {
+  constructor() {
+    this.queue = [];
+  }
+
+  enqueue(data) {
+    this.queue.push(data);
+  }
+
+  dequeue() {
+    return this.queue.shift();
+  }
+
+  isEmpty() {
+    return this.queue.length === 0;
+  }
+}
+//Defining seperate queues for every data parameter
+const TemperatureQueue = new DataQueue();
+const ECGQueue = new DataQueue();
+const HrQueue = new DataQueue();
+const RawQueue = new DataQueue();
+const writeQueue = new DataQueue();
+const GraphCharacteristics = {
+  temp_c: {
+    queueName: TemperatureQueue,
+    xtype: "linear",
+    xautorange: true,
+    xtitle: "Timestamp",
+    ytype: "linear",
+    yautorange: true,
+    ytitle: "Temperature (in °C)",
+    type: "scatter",
+    mode: "markers",
+    maxDataPoints: 20,
+    cssName: "Temperature",
+    heading: "Temperature Data",
+    xData: [],
+    yData: [],
+    colour: "blue",
+  },
+  ecg_uV: {
+    queueName: ECGQueue,
+    xtype: "linear",
+    xautorange: true,
+    xtitle: "Timestamp",
+    ytype: "linear",
+    yautorange: true,
+    ytitle: "ECG",
+    type: "scatter",
+    mode: "lines",
+    maxDataPoints: 500,
+    cssName: "ECG",
+    heading: "ECG Data",
+    xData: [],
+    yData: [],
+    colour: "red",
+  },
+  hr_bpm: {
+    queueName: HrQueue,
+    xtype: "linear",
+    xautorange: true,
+    xtitle: "Timestamp",
+    ytype: "linear",
+    yautorange: true,
+    ytitle: "Heart Rate",
+    type: "scatter",
+    mode: "markers",
+    maxDataPoints: 10,
+    cssName: "HeartRate",
+    heading: "HR Data",
+    xData: [],
+    yData: [],
+    colour: "red",
+  },
+};
+
+class LineBreakTransformer {
+  constructor() {
+    this.container = "";
+  }
+
+   transform(chunk, controller) {
+    /*****************************************************/
+    const string = Array.from(chunk);
+    // console.log(string);
+    const hexstring = string
+      .map((byte) => byte.toString(16).padStart(2, "0"))
+      .join(",");
+    // console.log(hexstring);
+    this.container += hexstring+',';
+    const lines = this.container.split("0d");
+    this.container = lines.pop();
+    // lines.forEach((line) => controller.enqueue(line));
+    lines.forEach((line) => {
+      // console.log(line);
+      const lineWithoutCommas = line.replace(/,/g, ''); // Remove commas using regex
+      controller.enqueue(lineWithoutCommas);
+      
+    });
+  
+    /*****************************************************/
+    
+  }
+
+  flush(controller) {
+    controller.enqueue(this.container);
+  }
+}
+
+/**
+ * connectSerial() is responsible for listing available
+ * serial ports and connecting with the selected one.
+ *
+ *
+ * @param {void}
+ * @returns {void}
+ * @throws {error} -Throws an error if it is unable to connect with selected serial port
+ *
+ */
+async function connectSerial() {
+  try {
+    const port = await navigator.serial.requestPort();
+    await port.open({ baudRate: 115200 }); // Adjust baud rate as needed
+    return port;
+  } catch (error) {
+    console.error("Serial connection error:", error);
+  }
+}
+
+/**
+ * processData() is recieves raw data from the UART and processes it further such
+ * that data frame values are seperated and the core data json is extracted.
+ *
+ * @param {hexString} data - Raw data from the UART
+ * @returns {void}
+ * @throws {error} Throws an error if it is unable to process data
+ *
+ */
+async function processData() {
+  let part = "";
+  let frame = {}; // object for saving frame data key values
+  let coreData = {}; // object that saves core data key values
+  let data;
+  while(1)
+  {
+  if(!RawQueue.isEmpty())
+  {
+  try {
+    data=RawQueue.dequeue();
+    console.log(data);
+    frame.start = data.substr(0, 2);
+    frame.version = data.substr(2, 2);
+    frame.lh = data.substr(4, 2);
+    // console.log(data. substr(6, 2));
+    frame.ll = parseInt(data.substr(6, 2), 16);
+    frame.ty = data.substr(8, 2);
+    frame.cs = data.substr(10, 2);
+    let len = frame.ll * 2;
+    frame.crch = data.substr(len, 2);
+    frame.crcl = data.substr(len + 2, 2);
+    frame.end = data.substr(len + 4, 2);
+    // console.log(frame);
+    part = data.substr(12, len);
+    // part=data;
+    frame.coreDataString = hexToString(part);
+    // console.log(frame.coreDataString);
+    writeQueue.enqueue(frame.coreDataString);
+    const cData = JSON.parse(frame.coreDataString);
+    data='';
+    const coreMap = new Map();
+    for (const [coreKey, coreValue] of Object.entries(cData)) {
+      coreMap.set(coreKey, coreValue);
+    }
+
+    const keyName = Object.keys(cData.data[0])[3];
+    coreData.time = coreMap.get("data")[0].t_s;
+    coreData.yEntity = coreMap.get("data")[0][keyName];
+    // console.log(coreMap.get("data")[0].t_s);
+
+    // Enqueue respective data
+    GraphCharacteristics[keyName].queueName.enqueue({
+      time: coreData.time,
+      yEntity: coreData.yEntity,
+    });
+    // console.log(coreData.temperature);
+    
+  } catch (error) {
+    console.log("\n\n");
+    // console.log(data);
+    // console.log(frame.ll);
+    console.log(frame.coreDataString);
+    data='';
+    // console.log('calculated length=',frame.coreDataString.length);
+    console.log("Error in data processsing", error);
+  }
+}
+await new Promise((resolve) => setTimeout(resolve, DataResolveTime));
+}
+}
+
+
+/**
+ * readStream() is responsible for reading chunks of data from the UART
+ * and splitting it according to Sibel's data frame.
+ *
+ * @param {reader}  -Recieves reader object for the respective port
+ * @returns {void}
+ * @throws {error} - Throws an error if it is unable to read data
+ *
+ */
+async function readStream(reader) {
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) {
+        break;
+      }
+      RawQueue.enqueue(value);
+      // console.log(value);
+    }
+  } catch (error) {
+    console.error("Error reading data:", error);
+  } finally {
+    console.log("closing the port");
+    // Close the port when done
+    // await port.close();
+  }
+}
+
+/**
+ * port_conf() is responsible for configuration of line break transfromers.
+ *
+ *
+ * @param {port}  -Recieves port
+ * @returns {reader} - Reader object that will be passed on to the read stream
+ * @throws {void}
+ *
+ */
+async function port_conf(port) {
+  // Create a line break transformer
+  const lineBreakTransformer = new LineBreakTransformer();
+
+  // Pipe the readable stream through the text decoder and line break transformer
+  const transformedStream = port.readable.pipeThrough(
+    new TransformStream(lineBreakTransformer)
+  );
+
+  // Create a reader for the transformed stream
+  const reader = transformedStream.getReader();
+return reader;
+}
+
+/**
+ * hexToString() is responsible for converting hexString to meaningful text string.
+ *
+ *
+ * @param {hexString}  -Recieves hexString
+ * @returns {String} - Returns converted string
+ * @throws {error} - Throws error if recieves an invalid string
+ *
+ */
+function hexToString(hexString) {
+  // Ensure the input has an even length
+  if (hexString.length % 2 !== 0) {
+    throw new Error("Invalid hex string");
+  }
+
+  // Convert pairs of characters to decimal and then to characters
+  const byteArray = [];
+  for (let i = 0; i < hexString.length; i += 2) {
+    byteArray.push(parseInt(hexString.substr(i, 2), 16));
+  }
+
+  // Use String.fromCharCode to convert the array of decimal values to a string
+  return String.fromCharCode.apply(null, byteArray);
+}
+
+/**
+ * Plot_Graph() is responsible for plotting the graph including the axis, heading and title.
+ *
+ * @param {object} - Recieves object which contain graph characteristics for respective parameter
+ * @returns {void}
+ * @throws {void}
+ *
+ */
+function Plot_Graph(obj) {
+  const layout = {
+    xaxis: {
+      type: obj.xtype,
+      autorange: obj.xautorange,
+      title: obj.xtitle,
+    },
+    yaxis: {
+      type: obj.ytype,
+      autorange: obj.yautorange,
+      title: obj.ytitle,
+    },
+    title: obj.heading,
+  };
+
+  const trace = {
+    x: obj.xData,
+    y: obj.yData,
+    type: obj.type,
+    mode: obj.mode,
+    line: { color: obj.colour },
+  };
+
+  Plotly.newPlot(obj.cssName, [trace], layout,{scrollZoom: true},{responsive: true});
+}
+
+/**
+ * updateChart() is responsible for updating the graph values.
+ * It recieves the object that signifies which chart needs to be updated
+ *
+ * @param {object} - Recieves object which contain graph characteristics for respective parameter
+ * @returns {void}
+ * @throws {error} - Throws error if promise is not resolved (data is not plotted) within the GraphResolveTime
+ *
+ */
+async function updateChart(obj) {
+  let ecgData='';
+  while (true) {
+    if (!obj.queueName.isEmpty()) {
+      const data = obj.queueName.dequeue();
+      // console.log(data);
+      const len = data.yEntity.length;
+      //if yEntity is an array like ECG data then:
+      if (len > 1) {
+        let x = data.time;
+        for (let i = 0; i < len; i++) {
+          obj.xData.push(x);
+          x = x + (timeDiff);
+          ecgData = 
+            data.yEntity[i] * ECG_V_REF_MILLIVOLTS / (Math.pow(2.0, 17.0) * ECG_GAIN_V_V) * ECG_12_BITS_TO_18_BITS;
+        obj.yData.push(ecgData);
+        }
+      }
+      //if yEntity is not an array like temperature data then:
+      else {
+        obj.xData.push(data.time);
+        obj.yData.push(data.yEntity[0]);
+      }
+      // console.log("x", obj.xData);
+      // console.log("y", obj.yData);
+      const maxDataPoints = obj.maxDataPoints;
+      if (obj.xData.length > maxDataPoints) {
+        obj.xData = obj.xData.slice(-maxDataPoints);
+        obj.yData = obj.yData.slice(-maxDataPoints);
+      }
+
+      Plotly.update(obj.cssName, { x: [obj.xData], y: [obj.yData] });
+
+      //   const maxX = Math.max(...obj.xData);
+      //   const maxY = Math.max(...obj.yData);
+      //   Plotly.update(obj.cssName, {
+      //     "xaxis.autorange": false,
+      //     "yaxis.autorange": false,
+      //     "xaxis.range": [Math.min(...obj.xData), maxX],
+      //     "yaxis.range": [Math.min(...obj.yData), maxY],
+      //   });
+    }
+    await new Promise((resolve) => setTimeout(resolve, GraphResolveTime));
+  }
+}
+
+/*MAIN begins from here*/
+//Plot the blank graph first
+
+Plot_Graph(GraphCharacteristics.temp_c);
+Plot_Graph(GraphCharacteristics.ecg_uV);
+Plot_Graph(GraphCharacteristics.hr_bpm);
+
+/****************************************************************/
+async function createFile() {
+  
+    const handle = await window.showDirectoryPicker();
+    const fileHandle = await handle.getFileHandle("ECG.txt", { create: true });
+     writable = await fileHandle.createWritable();
+    return writable;
+}
+
+async function writeToFile(obj) {
+  while(1)
+  {
+  if(!writeQueue.isEmpty())
+  {
+    try{
+
+  const data=writeQueue.dequeue();
+   await obj.write(data+'\n');
+  
+  }
+  catch(error){
+console.log(error);
+  }
+}
+await new Promise((resolve) => setTimeout(resolve, 5));
+}
+}
+/******************************************************************/
+
+//connect with the uart port
+document.getElementById("connectButton").addEventListener("click", async () => {
+  const port = await connectSerial();
+  // If the port is available then :
+  if (port) {
+    document.getElementById("connectButton").disabled = true;
+    connectButton.textContent = "Connected!";
+    connectButton.classList.add("connected");
+    const reader = await port_conf(port);
+    // Start reading
+    // const writerObj=await createFile();
+    readStream(reader);
+    processData();
+    // writeToFile(writerObj);
+
+    // update chart w.r.t values read
+    updateChart(GraphCharacteristics.temp_c);
+    updateChart(GraphCharacteristics.ecg_uV);
+    updateChart(GraphCharacteristics.hr_bpm);
+  }
+});
+document.getElementById("StopFile").addEventListener("click", async () => {
+    await writable.close();
+});
+    </script>
+</body>
+</html>
